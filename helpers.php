@@ -25,15 +25,17 @@ if ( ! function_exists('currency')) {
      */
     function currency($amount, $from, $to, $date = null, $options = [])
     {
+        $basic_currency = 'EUR';
+
         $from = strtoupper($from);
         $to   = strtoupper($to);
 
         if (null === $date) {
-            $eur_from_rate = \Swap\Laravel\Facades\Swap::latest("EUR/{$from}", $options);
-            $eur_to_rate   = \Swap\Laravel\Facades\Swap::latest("EUR/{$to}", $options);
+            $eur_from_rate = \Swap\Laravel\Facades\Swap::latest("{$basic_currency}/{$from}", $options);
+            $eur_to_rate   = \Swap\Laravel\Facades\Swap::latest("{$basic_currency}/{$to}", $options);
         } else {
-            $eur_from_rate = \Swap\Laravel\Facades\Swap::historical("EUR/{$from}", $date, $options);
-            $eur_to_rate   = \Swap\Laravel\Facades\Swap::historical("EUR/{$to}", $date, $options);
+            $eur_from_rate = \Swap\Laravel\Facades\Swap::historical("{$basic_currency}/{$from}", $date, $options);
+            $eur_to_rate   = \Swap\Laravel\Facades\Swap::historical("{$basic_currency}/{$to}", $date, $options);
         }
 
         $to_from_rate = $eur_to_rate->getValue() / $eur_from_rate->getValue();
