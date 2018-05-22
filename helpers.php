@@ -43,19 +43,3 @@ if ( ! function_exists('currency')) {
         return $amount * $to_from_rate;
     }
 }
-
-if ( ! function_exists('relation')) {
-    /**
-     * @param string $class_name
-     *
-     * @return string
-     */
-    function relation($class_name)
-    {
-        $relation = array_search($class_name, \Illuminate\Database\Eloquent\Relations\Relation::morphMap(), true);
-
-        $relation = (false === $relation) ? $class_name : $relation;
-
-        return $relation;
-    }
-}
