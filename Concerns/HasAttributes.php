@@ -225,6 +225,60 @@ trait HasAttributes
     }
 
     /**
+     * Get the model's relationships in array form.
+     *
+     * @return array
+     */
+    public function relationsToArray()
+    {
+        $attributes = [];
+
+        foreach ($this->getArrayableRelations() as $key => $value) {
+            // If the values implements the Arrayable interface we can just call this
+            // toArray method on the instances which will convert both models and
+            // collections to their proper array form and we'll set the values.
+            if ($value instanceof Arrayable) {
+                $relation = $value->toArray();
+            }
+
+            // If the value is null, we'll still go ahead and set it in this list of
+            // attributes since null is used to represent empty relationships if
+            // if it a has one or belongs to type relationships on the models.
+            elseif (is_null($value)) {
+                $relation = $value;
+            }
+
+            // If the relationships snake-casing is enabled, we will snake case this
+            // key so that the relation attribute is snake cased in this returned
+            // array to the developers, making this consistent with attributes.
+            if (static::$snakeAttributes) {
+                $key = Str::snake($key);
+            }
+
+            // If the relation value has been set, we will set it on this attributes
+            // list for returning. If it was not arrayable or null, we'll not set
+            // the value on the array because it is some type of invalid value.
+            if (isset($relation) || is_null($value)) {
+                $attributes[$key] = $relation;
+            }
+
+            unset($relation);
+        }
+
+        return $attributes;
+    }
+
+    /**
+     * Get an attribute array of all arrayable relations.
+     *
+     * @return array
+     */
+    protected function getArrayableRelations()
+    {
+        return $this->getArrayableItems($this->relations);
+    }
+
+    /**
      * Get an attribute array of all arrayable values.
      *
      * @param  array  $values
@@ -263,10 +317,14 @@ trait HasAttributes
             return $this->getAttributeValue($key);
         }
 
-        throw new Exception(sprintf(
-            '[%s] not defined on [%s].',
-            $key, get_class($this)
-        ));
+        // Here we will determine if the model base class itself contains this given key
+        // since we don't want to treat any of those methods as relationships because
+        // they are all intended as helper methods and none of these are relations.
+        if (method_exists(self::class, $key)) {
+            return;
+        }
+
+        return $this->getRelationValue($key);
     }
 
     /**
@@ -315,6 +373,46 @@ trait HasAttributes
         if (isset($this->attributes[$key])) {
             return $this->attributes[$key];
         }
+    }
+
+    /**
+     * Get a relationship.
+     *
+     * @param  string  $key
+     * @return mixed
+     */
+    public function getRelationValue($key)
+    {
+        // If the key already exists in the relationships array, it just means the
+        // relationship has already been loaded, so we'll just return it out of
+        // here because there is no need to query within the relations twice.
+        if ($this->relationLoaded($key)) {
+            return $this->relations[$key];
+        }
+
+        // If the "attribute" exists as a method on the model, we will just assume
+        // it is a relationship and will load and return results from the query
+        // and hydrate the relationship's value on the "relationships" array.
+        if (method_exists($this, $key)) {
+            return $this->getRelationshipFromMethod($key);
+        }
+    }
+
+    /**
+     * Get a relationship value from a method.
+     *
+     * @param  string  $method
+     * @return mixed
+     *
+     * @throws \LogicException
+     */
+    protected function getRelationshipFromMethod($method)
+    {
+        $relation = $this->$method();
+
+        return tap($relation, function ($results) use ($method) {
+            $this->setRelation($method, $results);
+        });
     }
 
     /**

@@ -2,7 +2,6 @@
 
 namespace EFrame\Support;
 
-use Exception;
 use ArrayAccess;
 use JsonSerializable;
 use Illuminate\Support\Arr;
@@ -178,13 +177,9 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
      */
     public function newInstance($attributes = [], $exists = false)
     {
-        $model = null;
-
-        static::unguarded(function () use (&$model, $attributes) {
-            // This method just provides a convenient way for us to generate fresh model
-            // instances of this current model.
-            $model = new static((array) $attributes);
-        });
+        // This method just provides a convenient way for us to generate fresh model
+        // instances of this current model.
+        $model = new static((array) $attributes);
 
         $model->exists = $exists;
 
@@ -259,6 +254,8 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
 
         return tap(new static, function ($instance) use ($attributes) {
             $instance->setRawAttributes($attributes);
+
+            $instance->setRelations($this->relations);
         });
     }
 
