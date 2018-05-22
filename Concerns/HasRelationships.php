@@ -4,6 +4,7 @@ namespace EFrame\Support\Concerns;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 trait HasRelationships
 {
