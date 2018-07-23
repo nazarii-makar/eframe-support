@@ -22,11 +22,18 @@ abstract class AppServiceProvider extends ServiceProvider
     protected $commands = [];
 
     /**
+     * @var array
+     */
+    protected $configs = [];
+
+    /**
      * @return void
      */
     public function register()
     {
         $this->commands($this->commands);
+
+        $this->registerConfigs();
     }
 
     /**
@@ -43,5 +50,16 @@ abstract class AppServiceProvider extends ServiceProvider
     protected function registerMorphMap()
     {
         Relation::morphMap($this->morph_map);
+    }
+
+    /**
+     * Register configs
+     */
+    protected function registerConfigs()
+    {
+        foreach ($this->configs as $config) {
+            $path = realpath(__DIR__ . "/../../config/{$config}.php");
+            $this->mergeConfigFrom($path, $config);
+        }
     }
 }
