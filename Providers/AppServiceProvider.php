@@ -2,6 +2,7 @@
 
 namespace EFrame\Support\Providers;
 
+use ReflectionClass;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
@@ -57,8 +58,12 @@ abstract class AppServiceProvider extends ServiceProvider
      */
     protected function registerConfigs()
     {
+        $dirname = dirname(
+            (new ReflectionClass($this))->getFileName()
+        );
+
         foreach ($this->configs as $config) {
-            $path = realpath(__DIR__ . "/../../config/{$config}.php");
+            $path = realpath($dirname . "/../../config/{$config}.php");
             $this->mergeConfigFrom($path, $config);
         }
     }
